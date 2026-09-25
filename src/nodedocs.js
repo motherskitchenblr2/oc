@@ -72,7 +72,9 @@ export function buildEntries(all) {
   const seen = new Set();
   const add = (node, page, top) => {
     const text = String(node?.textRaw ?? '').replaceAll('`', '').trim();
-    const name = String(node?.name ?? '');
+    // A section's name keeps the heading's backticks ('`fetch`', every N-API
+    // function), so the two are compared with those stripped from both.
+    const name = String(node?.name ?? '').replaceAll('`', '');
     const type = String(node?.type ?? '');
     // A property's value line, 'Type: {string}', 'Returns: {Object}', or a
     // bare '{number}', stands where its heading would; it is never one, even
@@ -83,9 +85,10 @@ export function buildEntries(all) {
       && (top || text.toLowerCase().includes(name.toLowerCase()));
     if (heading && !seen.has(`${page}#${text}`)) {
       seen.add(`${page}#${text}`);
-      // A module or section heading is the page's own title, so its entry
-      // links to the page top; every other heading has an anchor worth keeping.
-      const anchor = ['module', 'misc', 'global'].includes(type) ? '' : slug(text);
+      // The top-level module or section heading is the page's own title, so
+      // its entry links to the page top; every other heading, a section
+      // within the page included, has an anchor worth keeping.
+      const anchor = top && ['module', 'misc', 'global'].includes(type) ? '' : slug(text);
       entries.push({ text, name, type, page, anchor });
     }
     for (const key of CHILD_KEYS) {
